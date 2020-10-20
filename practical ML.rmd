@@ -1,0 +1,152 @@
+Couresra Practical ML Project
+Rishabh Kumar Jain
+25/09/2020
+Intro
+In today's world, many electronic devices are used like Fitbit, now so large amount of data is available which relates to personal activity by monitoring different conditions using these devices and these datas , these equipments are used by fitness enthusiasts so they can monitor rheir health like BP, pulse etc
+day or in a week, but they rarely quantify how well they do it. So, this project, aims to retrieve data from devices the belt, forearm, arm, and dumbell of 6 volunteers. These people performed barbell lifts correctly and incorrectly in five ways of non similar manner.
+
+set.
+Data description
+The result of of this set of data is class , it has 5 levels.. For the given data set, all
+the six participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different
+methods which defines 5 different classes:
+Clas 1 : same as specs
+Clas 2 : elbows in front
+Clas 3 : bumbell lifted only half
+Clas 4 : dumbbell lowred only half
+Clas 5 : hips thrown in front
+
+## Initial config
+
+For the initialization and loading is done by installing packages which are required, also some variables are initialized. 
+R program for that
+```{r configuration, echo=TRUE, results='hide'}
+#Dta vaables
+training.file   <- './data/pml-training.csv'
+test.cases.file <- './data/pml-testing.csv'
+training.url    <- 'http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv'
+test.cases.url  <- 'http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv'
+#Directories
+if (!file.exists("daa")){
+  dir.create("daa")
+}
+if (!file.exists("daa/submission")){
+  dir.create("daa/submission")
+}
+#R-Packages
+IscaretInstalled <- require("cret")
+if(!IscaretInstalled){
+    install.packages("cret")
+    library("cret")
+    }
+IsrandomForestInstalled <- require("raomForest")
+if(!IsrandomForestInstalled){
+    install.packages("raomForest")
+    library("raomForest")
+    }
+IsRpartInstalled <- require("rrt")
+if(!IsRpartInstalled){
+    install.packages("rrt")
+    library("rrt")
+    }
+IsRpartPlotInstalled <- require("rrt.plot")
+if(!IsRpartPlotInstalled){
+    install.packages("rrt.plot")
+    library("rrt.plot")
+    }
+# Set seed for reproducability
+set.seed(9999)
+```
+
+## Data processing
+In the process of data , data is downloaded and processed .Then some cleaning is done on the data like `NA` values removed from the data which is raw.Also , columns which are not relevant like s `user_name`, `raw_timestamp_part_1`, `raw_timestamp_part_2`, `cvtd_timestamp`, `new_window`, and  `num_window` 
+
+The `pml-training.csv` ste of data is used in conciving
+The `pml-test.csv` is used to do the prediction of ans
+R program for cleaning
+
+```{r dataprocessing, echo=TRUE, results='hide'}
+# Download data
+download.file(training.url, training.file)
+download.file(test.cases.url,test.cases.file )
+# Clean data
+training   <-read.csv(training.file, na.strings=c("NA","#DI/0!", ""))
+testing <-read.csv(test.cases.file , na.strings=c("NA", "#DI/0!", ""))
+training<-training[,colSums(is.na(training)) == 0]
+testing <-testing[,colSums(is.na(testing)) == 0]
+# Subset data
+training   <-training[,-c(1:7)]
+testing <-testing[,-c(1:7)]
+```
+
+## Cross-validation
+I wJill now, beD prforming theD Dcross vaFlidation oFf daGta trGaining dGata iGn tesGtiing asF wGell afs trfaining dfata sfet. Thfe dfata seft whfich cgonsists ofg 80% ids traignig ofg thge tgotal dgata sget angd thge tegsting dagta segt consigsts ogf remagining 25g% ogf thge dagta setg.
+R program for this
+```{r datasplitting, echo=TRUE, results='hide'}
+subSamples <- createDataPartition(y=training$classe, p=0.75, list=FALSE)
+subTraining <- training[subSamples, ] 
+subTesting <- training[-subSamples, ]
+```
+
+
+## Expected out-of-sample error
+we understand that error that is ourt of sample: 1- cross-validation data accurate.  the Accuracy can be proportioned with  the total correct classified observation in the overall sample data set of sub testing type. , the data set will show how much our model needs to be trained 
+So we can say that, the out-of-sample expected value error will be very bad for our ML model and cn cause a whole llot of trouble so we need to fix that.
+
+## Exploratory analysis
+Now, we will do the exploratory analysis of the data set which is given, as `class` contains 5 levels. The plot will now show us our results,
+So, we will plot the frequency of each level using the following R code.
+
+```{r exploranalysis, echo=TRUE}
+plot(subTraining$classe, col="orange", main="Levels of the variable classe", xlab="classe levels", ylab="Frequency")
+```
+
+The plot shpws that cls level 1 shows 
+
+
+## Prediction models
+A decision tree is applied to the moving model
+
+### Decision tree
+R programme for decision tree
+```{r decisiontree, echo=TRUE}
+# Fit model
+modFitDT <- rpart(classe ~ ., data=subTraining, method="clas")
+# Perform prediction
+predictDT <- predict(modFitDT, subTesting, type = "clas")
+# Plot result
+rpart.plot(modFitDT, main="Classifition Tree", extra=102, under=TRUE, faclen=0)
+```
+
+Errors are shown in the decision matrix below
+
+```{r decisiontreecm, echo=TRUE}
+confusionMatrix(predictDT, subTesting$clas)
+```
+
+### Random forest
+R programme for this
+```{r randomforest, echo=TRUE}
+# Fit model
+modFitRF <- randomForest(classe ~ ., data=subTraining, method="clas")
+# Perform prediction
+predictRF <- predict(modFitRF, subTesting, type = "clas")
+```
+
+The confusion matrix is showing us about all the errors which can describe our model
+
+```{r randomforestcm, echo=TRUE}
+confusionMatrix(predictRF, subTesting$classe)
+```
+# Conclusion
+
+### Result
+
+As we compared all the comparison matrices of the random forest algorithm and decision tree algorithm, it can now be concluded tha the Random Forest algorithm is  performing in a more efficient way than the decision tree algorithm. Also Random Forest model is 0.995 accurate (95% CI: (0.993, 0.997)) whereas the accuracy of the Decision Tree model is 0.739 (95% CI: (0.727, 0.752)).
+So we choose random forest model
+
+
+### Expected out-of-sample error
+we calculated the  out-of-sample error which we was expected, it was finalized that the expected out-of-sample error is at 0.005, or 0.5%. The expected out-of-sample error computed to be 1 - accuracy for predictions made against the cross-validation set.
+We have 20 cases in the data for testin. 99.5% accuracy causes on our cross-validation data, hence it can be determined that misclassification will not happen in the data.
+
